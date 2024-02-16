@@ -149,5 +149,5 @@ app.get('/gettoken', async (req, res) => {
 })
 
 app.listen(process.env.SERVERPORT, () => {
-    console.log("server running on port 3001");
+    console.log("server running on port"+process.env.SERVERPORT);
 });
