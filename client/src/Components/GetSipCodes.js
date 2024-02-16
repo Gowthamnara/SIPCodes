@@ -2,7 +2,7 @@ import axios from "axios";
 import { useParams } from "react-router-dom";
 import { useState } from "react";
 
-export default async function GetSipCodes(convid){
+export default async function GetSipCodes(){
     try{
 
         const [sipcodes,setSipCodes]= useState([])
