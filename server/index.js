@@ -12,7 +12,7 @@ require('dotenv').config()
 const SIPDescription = SIPCodes
 
 async function gettoken() {
-    return client.loginClientCredentialsGrant(process.env.client_id,process.env.client_secret)
+    return client.loginClientCredentialsGrant(process.env.CLIENT_ID,process.env.CLIENT_SECRET)
         .then((authData) => {
             console.log(authData)
             console.log(`Token obtained`);
@@ -112,10 +112,10 @@ app.get('/getsipcodes/:conversationid', async (req, res) => {
                     sipcodesdata.push(sipcodesobj)
                 }
                 console.log(req.params.conversationid)
-                let setexternaltag=await setExternalTag(req.params.conversationid,sipcodesdata[sipcodesdata.length-1].Method)
-                if(setExternalTag){
-                    console.log("External Tag Set to"+setExternalTag)
-                }
+                // let setexternaltag=await setExternalTag(req.params.conversationid,sipcodesdata[sipcodesdata.length-1].Method)
+                // if(setExternalTag){
+                //     console.log("External Tag Set to"+setExternalTag)
+                // }
                 res.send(sipcodesdata)
             }
         else{
