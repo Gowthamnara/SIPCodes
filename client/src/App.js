@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { BrowserRouter, Route,Routes, useParams } from 'react-router-dom';
+import { BrowserRouter, Route,Routes} from 'react-router-dom';
 import GetSipCodes from './Components/GetSipCodes';
 
 
