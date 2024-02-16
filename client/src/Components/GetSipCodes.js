@@ -11,7 +11,7 @@ export default async function GetSipCodes(){
 
         async function getsipcode(){
             try{
-              const sipcodes=await axios.get('http://localhost:3001/getsipcodes/'+convid);
+              const sipcodes=await axios.get('http://'+process.env.PUBLICDNS+':3001/getsipcodes/'+convid);
               console.log(sipcodes)
               setSipCodes(sipcodes.data)
               return sipcodes.data
