@@ -129,10 +129,10 @@ app.get('/getsipcodes/:conversationid', async (req, res) => {
                     sipcodesdata.push(sipcodesobj)
                 }
                 console.log(req.params.conversationid)
-                let setexternaltag=await setExternalTag(req.params.conversationid,sipcodesdata[sipcodesdata.length-1].Method)
-                if(setExternalTag){
-                    console.log("External Tag Set to"+setExternalTag)
-                }
+                //let setexternaltag=await setExternalTag(req.params.conversationid,sipcodesdata[sipcodesdata.length-1].Method)
+                // if(setExternalTag){
+                //     console.log("External Tag Set to"+setExternalTag)
+                // }
                 res.send(sipcodesdata)
         }
     }
