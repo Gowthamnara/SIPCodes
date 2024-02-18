@@ -16,33 +16,34 @@ async function gettoken() {
         .then((authData) => {
             console.log(authData)
             console.log(`Token obtained`);
-            process.env.Token = authData.accessToken
+            process.env.TOKEN = authData.accessToken
             process.env.TOKEN_EXPIRY = authData.tokenExpiryTime
             client.setAccessToken(authData.accessToken);
             return true
-
         })
-
         .catch((err) => {
-
             console.log('There was a failure calling loginClientCredentialsGrant');
             console.error(err);
         });
 
 }
 
-async function ExceptionHandling(err){
+async function ExceptionHandling(err,conversationId){
     if (err.status = 429) {
-        var sleeptime = err.message.match(/\d+/)
+        console.log(err.message)
+        var sleeptime = (err.message).match(/\d+/)[0]?(err.message).match(/\d+/)[0]:"1"
+        console.log(sleeptime)
         //var waitTill = new Date(new Date().getTime() + 60 * 1000);
         // while(waitTill > new Date()){}
-        await new Promise(resolve => setTimeout(resolve, sleeptime[0] * 1000));
-        await getsipcodes()
-        console.log(`Resuming post Request ${startdate}`);
-
+        console.log("waiting for ",(parseInt(sleeptime[0])* 1000)+1)
+        await new Promise(resolve => setTimeout(resolve, (parseInt(sleeptime[0])* 1000)+1));
+        let data=await getsipcodes(conversationId)
+        console.log(`Resuming post Request`,new Date(),data.count?data.count:"Null");
+        return data
     }
     else{
         console.log(err)
+        return null
     }
 }
 
@@ -65,6 +66,31 @@ return apiInstance.putConversationTags(conversationId, body)
   });
 }
 
+// async function getsipcodesexp(conversationid) {
+//     try{
+//         //let accesstoken = await gettoken()
+//         let apiInstance = new platformClient.TelephonyApi();
+//         let dateStart = new Date(new Date().getDate()+"-"+(parseInt(new Date().getMonth())+1)+"-"+new Date().getFullYear()+"T00:00:30+01:00"); // Date | Start date of the search. Date time is represented as an ISO-8601 string. For example: yyyy-MM-ddTHH:mm:ss[.mmm]Z
+//         let dateEnd = new Date(new Date().getDate()+"-"+(parseInt(new Date().getMonth())+1)+"-"+new Date().getFullYear()+"T23:59:50+01:00"); // Date | End date of the search. Date time is represented as an ISO-8601 string. For example: yyyy-MM-ddTHH:mm:ss[.mmm]Z
+//         let opts = {
+//             "callId": "", // String | unique identification of the placed call
+//             "toUser": "", // String | User to who the call was placed
+//             "fromUser": "", // String | user who placed the call
+//             "conversationId": conversationid // String | Unique identification of the conversation
+//         };
+
+//         // Fetch SIP metadata
+//         let SIPTraces=await apiInstance.getTelephonySiptraces(dateStart, dateEnd, opts)
+//         //console.log("Data",SIPTraces)
+//         return SIPTraces
+//         }
+//     catch(err){
+//         console.log(err)
+//         let returndata=await ExceptionHandling(err,conversationid)
+//         return returndata
+//     }
+    
+// }
 
 async function getsipcodes(conversationid) {
     try{
@@ -80,19 +106,14 @@ async function getsipcodes(conversationid) {
         };
 
         // Fetch SIP metadata
-        return apiInstance.getTelephonySiptraces(dateStart, dateEnd, opts)
-            .then((data) => {
-            //console.log(`getTelephonySiptraces success! data: ${JSON.stringify(data, null, 2)}`);
-                console.log("Sip Codes API Called")
-                return data
-            })
-            .catch((err) => {
-                console.log("There was a failure calling getTelephonySiptraces");
-                console.error(err);
-            });
+        let SIPTraces=await apiInstance.getTelephonySiptraces(dateStart, dateEnd, opts)
+        //console.log(SIPTraces)
+        return SIPTraces
     }
     catch(err){
-        await ExceptionHandling(err)
+        //console.log(err)
+        let returndata=await ExceptionHandling(err,conversationid)
+        return returndata
     }
     
 }
@@ -102,9 +123,36 @@ async function getsipcodes(conversationid) {
 
 app.get('/getsipcodes/:conversationid', async (req, res) => {
     try{
+        console.log("token exist")
         if(process.env.TOKEN_EXPIRY && process.env.TOKEN_EXPIRY > (new Date().getTime())+2000){
                 let sipcodes = await getsipcodes(req.params.conversationid)
+                console.log("data received",sipcodes.count?sipcodes.count:"NULL")
                 sipcodesdata=[]
+                if(sipcodes){
+                    for(i in sipcodes.data){
+                        sipcodesobj={}
+                        sipcodesobj.Method=sipcodes.data[i].method
+                        sipcodesobj.Description=SIPDescription[sipcodes.data[i].method]?SIPDescription[sipcodes.data[i].method]:""
+                        sipcodesdata.push(sipcodesobj)
+                    }
+                    console.log(req.params.conversationid)
+                    // let setexternaltag=await setExternalTag(req.params.conversationid,sipcodesdata[sipcodesdata.length-1].Method)
+                    // if(setExternalTag){
+                    //     console.log("External Tag Set to"+setExternalTag)
+                    // }
+                    res.send(sipcodesdata)
+                }
+                else{
+                    console.log("Data Unavailable")
+                    res.send("Data Unavailable")
+            }
+            }
+        else{
+            await gettoken()
+            let sipcodes = await getsipcodes(req.params.conversationid)
+            console.log("data received",sipcodes.count?sipcodes.count:"NULL")
+            sipcodesdata=[]
+            if(sipcodes){
                 for(i in sipcodes.data){
                     sipcodesobj={}
                     sipcodesobj.Method=sipcodes.data[i].method
@@ -118,22 +166,10 @@ app.get('/getsipcodes/:conversationid', async (req, res) => {
                 // }
                 res.send(sipcodesdata)
             }
-        else{
-            await gettoken()
-            let sipcodes = await getsipcodes(req.params.conversationid)
-                sipcodesdata=[]
-                for(i in sipcodes.data){
-                    sipcodesobj={}
-                    sipcodesobj.Method=sipcodes.data[i].method
-                    sipcodesobj.Description=SIPDescription[sipcodes.data[i].method]?SIPDescription[sipcodes.data[i].method]:""
-                    sipcodesdata.push(sipcodesobj)
-                }
-                console.log(req.params.conversationid)
-                //let setexternaltag=await setExternalTag(req.params.conversationid,sipcodesdata[sipcodesdata.length-1].Method)
-                // if(setExternalTag){
-                //     console.log("External Tag Set to"+setExternalTag)
-                // }
-                res.send(sipcodesdata)
+            else{
+                console.log("Data Unavailable")
+                res.send("Data Unavailable")
+            }
         }
     }
     catch(err){
@@ -148,6 +184,6 @@ app.get('/gettoken', async (req, res) => {
     res.send({ "token": token })
 })
 
-app.listen(process.env.SERVERPORT, () => {
-    console.log("server running on port"+process.env.SERVERPORT);
+app.listen(process.env.PORT, () => {
+    console.log("server running on port 3001");
 });
