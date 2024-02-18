@@ -184,6 +184,6 @@ app.get('/gettoken', async (req, res) => {
     res.send({ "token": token })
 })
 
-app.listen(process.env.PORT, () => {
-    console.log("server running on port 3001");
+app.listen(process.env.SERVERPORT, () => {
+    console.log("server running on port "+process.env.SERVERPORT);
 });
